@@ -6,7 +6,10 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-int pick_addr(const char *node, const char *service, struct addrinfo *saddr) {
+int pick_random_stream_addr(const char *node, const char *serice,
+			    int *family, int *socktype, int *protocol,
+			    struct sockaddr_storage *s_addr) {
+
   register int ret, count, pick, i;
   struct addrinfo *addrs, *addr, hints = {0};
 
@@ -19,14 +22,18 @@ int pick_addr(const char *node, const char *service, struct addrinfo *saddr) {
   if(ret)
     return -1;
 
+  /* Count addresses */
   for(count = 0, addr = addrs; addr; count++, addr = addr->ai_next);
 
+  /* Pick one */
   pick = rand() % count;
 
   for(i = 0, addr = addrs; i < pick; i++, addr = addr->ai_next);
 
-  *saddr = *addr;
-  saddr->ai_next = NULL;
+  *family = addr->ai_family;
+  *socktype = addr->ai_socktype;
+  *protocol = addr->ai_protocol;
+  *s_addr = *(addr->ai_addr);
 
   freeaddrinfo(addrs);
 
